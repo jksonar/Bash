@@ -1,10 +1,6 @@
 #!/bin/bash 
 
-# dependensy
-# yum install pwgen -y 
-#run on windows
-#Get-LocalUser    \\powershell command
-#wmic useraccount get name >> c:\Users\Administrator\Desktop\userlist.txt 
+ 
 
 usrC=1
 if [ -z $1 ];then
