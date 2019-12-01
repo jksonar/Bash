@@ -33,12 +33,12 @@ rm -f /root/user.txt
 fi
 for i in $uName
 do
-#uPasswd=$( pwgen 8 1)
+
 uPasswd=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
-#nPasswd=${$uPasswd:0:8}
+
 echo -e "${usrC}) username: ${i}\npassword: ${uPasswd:0:6}@${usrC}\n" >> /root/user.txt
 echo "net user ${i} ${uPasswd:0:6}@${usrC} /add"
-#echo "net user ${i} /delete"
+
 
 ((usrC++))
 done
@@ -46,7 +46,7 @@ echo "pause"
 }
 
 function reSetPasswd(){
-#uName=$(cat $2)
+
 if [ -f /root/user_reset.txt ];then
 rm -f /root/user_reset.txt
 fi
