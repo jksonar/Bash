@@ -37,6 +37,18 @@ function RUN_DB_BACKUP(){
     done
 }
 
+function SINGLE_DB_BACKUP(){
+    cd ${MYSQLBKP_DIR}
+    # List All Databases Present and ignore default databases
+    ALL_DB=$(mysql --defaults-group-suffix=${1} -Bse "show databases" | grep -vE "information_schema|mysql|performance_schema|sys")
+    for database in ${ALL_DB}
+    do 
+    mysqldump --defaults-group-suffix=${1} ${database} > ${MYSQLBKP_DIR}/${database}_${DATE_FORMATE}.sql
+    tar zcf ${database}_${DATE_FORMATE}.sql.tar.gz ${database}_${DATE_FORMATE}.sql
+    rm -f ${database}_${DATE_FORMATE}.sql
+    done
+}
+
 ### Function Call ###
 VALIDATE_DATA
 RUN_DB_BACKUP ${CONNECT_DETAILS}
