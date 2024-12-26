@@ -8,6 +8,8 @@ MYSQLBKP_DIR=/var/backup
 CONNECT_DETAILS="_server1"
 CONNECT_DETAILS2="_server2"
 
+DB_NAME="database1"
+
 function VALIDATE_DATA(){
     # exit script if my.cnf not exist 
     if [ ! -f ~/.my.cnf ]
@@ -31,7 +33,7 @@ function RUN_DB_BACKUP(){
     ALL_DB=$(mysql --defaults-group-suffix=${1} -Bse "show databases" | grep -vE "information_schema|mysql|performance_schema|sys")
     for database in ${ALL_DB}
     do 
-    mysqldump --defaults-group-suffix=${1} ${database} > ${MYSQLBKP_DIR}/${database}_${DATE_FORMATE}.sql
+    mysqldump --defaults-group-suffix=${1} ${database} > ${database}_${DATE_FORMATE}.sql
     tar zcf ${database}_${DATE_FORMATE}.sql.tar.gz ${database}_${DATE_FORMATE}.sql
     rm -f ${database}_${DATE_FORMATE}.sql
     done
@@ -39,17 +41,15 @@ function RUN_DB_BACKUP(){
 
 function SINGLE_DB_BACKUP(){
     cd ${MYSQLBKP_DIR}
-    # List All Databases Present and ignore default databases
-    ALL_DB=$(mysql --defaults-group-suffix=${1} -Bse "show databases" | grep -vE "information_schema|mysql|performance_schema|sys")
-    for database in ${ALL_DB}
-    do 
-    mysqldump --defaults-group-suffix=${1} ${database} > ${MYSQLBKP_DIR}/${database}_${DATE_FORMATE}.sql
-    tar zcf ${database}_${DATE_FORMATE}.sql.tar.gz ${database}_${DATE_FORMATE}.sql
-    rm -f ${database}_${DATE_FORMATE}.sql
-    done
+    mysqldump --defaults-group-suffix=${1} ${2} > ${2}_${DATE_FORMATE}.sql
+    tar zcf ${2}_${DATE_FORMATE}.sql.tar.gz ${2}_${DATE_FORMATE}.sql
+    rm -f ${2}_${DATE_FORMATE}.sql
 }
 
 ### Function Call ###
 VALIDATE_DATA
-RUN_DB_BACKUP ${CONNECT_DETAILS}
-RUN_DB_BACKUP ${CONNECT_DETAILS2}
+
+# RUN_DB_BACKUP ${CONNECT_DETAILS}
+# RUN_DB_BACKUP ${CONNECT_DETAILS2}
+
+SINGLE_DB_BACKUP ${CONNECT_DETAILS} ${DB_NAME}
