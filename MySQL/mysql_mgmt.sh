@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Default host (can be overridden by environment variable)
-MYSQL_HOST=${MYSQL_HOST:-localhost}
+MYSQL_HOST="%"
 
 # Validate username (alphanumeric + underscore, 3-16 chars)
 validate-username() {
@@ -15,9 +15,28 @@ validate-dbname() {
   return 0
 }
 
-# Validate password (min 8 chars, at least one letter, one number, and allows special chars)
+# Password validation (8-12 chars, letters, digits, punctuation, no spaces)
 validate-password() {
-  [[ "$1" =~ ^(?=.*[A-Za-z])(?=.*[0-9])(?=.*[@#$%^&+=!]).{8,}$ ]] || { echo "Error: Weak password. Must be at least 8 characters with letters, numbers, and special characters."; return 1; }
+  local PASS1="$1"
+  if L=${#PASS1}; [[ L -lt 8 || L -gt 12 ]]; then
+    echo "Error: Password must have 8-12 characters."
+    return 1
+  elif [[ "$PASS1" != *[[:digit:]]* ]]; then
+    echo "Error: Password must contain at least one digit."
+    return 1
+  elif [[ "$PASS1" != *[[:upper:]]* ]]; then
+    echo "Error: Password must contain at least one uppercase letter."
+    return 1
+  elif [[ "$PASS1" != *[[:lower:]]* ]]; then
+    echo "Error: Password must contain at least one lowercase letter."
+    return 1
+  elif [[ "$PASS1" != *[[:punct:]]* ]]; then
+    echo "Error: Password must contain at least one special character."
+    return 1
+  elif [[ "$PASS1" == *[[:blank:]]* ]]; then
+    echo "Error: Password cannot contain spaces."
+    return 1
+  fi
   return 0
 }
 
@@ -29,6 +48,7 @@ mysql-create-user() {
   USER_EXISTS=$(mysql -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$1' AND host = '$MYSQL_HOST')")
   if [ "$USER_EXISTS" -eq 0 ]; then
     mysql -ve "CREATE USER '$1'@'$MYSQL_HOST' IDENTIFIED BY '$2'"
+    echo "User '$1' created successfully."
   else
     echo "Error: User '$1'@'$MYSQL_HOST' already exists."
   fi
