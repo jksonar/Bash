@@ -15,9 +15,9 @@ validate-dbname() {
   return 0
 }
 
-# Validate password (min 8 chars, at least one letter and one number)
+# Validate password (min 8 chars, at least one letter, one number, and allows special chars)
 validate-password() {
-  [[ "$1" =~ ^(?=.*[A-Za-z])(?=.*[0-9]).{8,}$ ]] || { echo "Error: Weak password. Must be at least 8 characters with letters and numbers."; return 1; }
+  [[ "$1" =~ ^(?=.*[A-Za-z])(?=.*[0-9])(?=.*[@#$%^&+=!]).{8,}$ ]] || { echo "Error: Weak password. Must be at least 8 characters with letters, numbers, and special characters."; return 1; }
   return 0
 }
 
