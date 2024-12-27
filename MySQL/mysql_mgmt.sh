@@ -6,13 +6,23 @@ MYSQL_HOST=${MYSQL_HOST:-localhost}
 # Create user in MySQL/MariaDB.
 mysql-create-user() {
   [ -z "$2" ] && { echo "Usage: mysql-create-user (user) (password)"; return; }
-  mysql -ve "CREATE USER '$1'@'$MYSQL_HOST' IDENTIFIED BY '$2'"
+  USER_EXISTS=$(mysql -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$1' AND host = '$MYSQL_HOST')")
+  if [ "$USER_EXISTS" -eq 0 ]; then
+    mysql -ve "CREATE USER '$1'@'$MYSQL_HOST' IDENTIFIED BY '$2'"
+  else
+    echo "Error: User '$1'@'$MYSQL_HOST' already exists."
+  fi
 }
 
 # Delete user from MySQL/MariaDB
 mysql-drop-user() {
   [ -z "$1" ] && { echo "Usage: mysql-drop-user (user)"; return; }
-  mysql -ve "DROP USER '$1'@'$MYSQL_HOST';"
+  USER_EXISTS=$(mysql -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$1' AND host = '$MYSQL_HOST')")
+  if [ "$USER_EXISTS" -eq 1 ]; then
+    mysql -ve "DROP USER '$1'@'$MYSQL_HOST';"
+  else
+    echo "Error: User '$1'@'$MYSQL_HOST' does not exist."
+  fi
 }
 
 # Create new database in MySQL/MariaDB.
@@ -30,14 +40,24 @@ mysql-drop-db() {
 # Grant all permissions for user for given database.
 mysql-grant-db() {
   [ -z "$2" ] && { echo "Usage: mysql-grant-db (user) (database)"; return; }
-  mysql -ve "GRANT ALL ON $2.* TO '$1'@'$MYSQL_HOST'"
-  mysql -ve "FLUSH PRIVILEGES"
+  USER_EXISTS=$(mysql -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$1' AND host = '$MYSQL_HOST')")
+  if [ "$USER_EXISTS" -eq 1 ]; then
+    mysql -ve "GRANT ALL ON $2.* TO '$1'@'$MYSQL_HOST'"
+    mysql -ve "FLUSH PRIVILEGES"
+  else
+    echo "Error: User '$1'@'$MYSQL_HOST' does not exist."
+  fi
 }
 
 # Show current user permissions.
 mysql-show-grants() {
   [ -z "$1" ] && { echo "Usage: mysql-show-grants (user)"; return; }
-  mysql -ve "SHOW GRANTS FOR '$1'@'$MYSQL_HOST'"
+  USER_EXISTS=$(mysql -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$1' AND host = '$MYSQL_HOST')")
+  if [ "$USER_EXISTS" -eq 1 ]; then
+    mysql -ve "SHOW GRANTS FOR '$1'@'$MYSQL_HOST'"
+  else
+    echo "Error: User '$1'@'$MYSQL_HOST' does not exist."
+  fi
 }
 
 # Case statement to handle script arguments
