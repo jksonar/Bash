@@ -85,6 +85,9 @@ function SINGLE_DB_BACKUP() {
 
 function USAGE() {
     echo "Usage: $0 {full|single} <connection_details> <database_name>"
+    echo "Available commands:"
+    echo "  full (connection_details)                   - Run on MySQL Connection Take ALL Databases"
+    echo "  single (connection_details) (database_name) - Delete an existing MySQL user"
     exit 1
 }
 
@@ -109,9 +112,7 @@ case "$1" in
         SINGLE_DB_BACKUP ${CONNECT_DETAILS} ${DB_NAME}
         ;;
     help)
-        echo "Available commands:"
-        echo "  full (connection_details)                   - Run on MySQL Connection Take ALL Databases"
-        echo "  single (connection_details) (database_name) - Delete an existing MySQL user"
+        USAGE
         ;;
     *)
         USAGE
