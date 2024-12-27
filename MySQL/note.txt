@@ -1,0 +1,6 @@
+
+# script will run on all servers and take all batabses present in server 
+./mysql_database_backup.sh full "_server1 _server2"
+
+# script will run on single server and take respected database
+./mysql_database_backup.sh single _server2 mockaroo
