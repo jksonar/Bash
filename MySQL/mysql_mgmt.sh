@@ -3,9 +3,29 @@
 # Default host (can be overridden by environment variable)
 MYSQL_HOST=${MYSQL_HOST:-localhost}
 
+# Validate username (alphanumeric + underscore, 3-16 chars)
+validate-username() {
+  [[ "$1" =~ ^[a-zA-Z0-9_]{3,16}$ ]] || { echo "Error: Invalid username '$1'. Use 3-16 alphanumeric characters or underscores."; return 1; }
+  return 0
+}
+
+# Validate database name (alphanumeric + underscore, 3-32 chars)
+validate-dbname() {
+  [[ "$1" =~ ^[a-zA-Z0-9_]{3,32}$ ]] || { echo "Error: Invalid database name '$1'. Use 3-32 alphanumeric characters or underscores."; return 1; }
+  return 0
+}
+
+# Validate password (min 8 chars, at least one letter and one number)
+validate-password() {
+  [[ "$1" =~ ^(?=.*[A-Za-z])(?=.*[0-9]).{8,}$ ]] || { echo "Error: Weak password. Must be at least 8 characters with letters and numbers."; return 1; }
+  return 0
+}
+
 # Create user in MySQL/MariaDB.
 mysql-create-user() {
   [ -z "$2" ] && { echo "Usage: mysql-create-user (user) (password)"; return; }
+  validate-username "$1" || return
+  validate-password "$2" || return
   USER_EXISTS=$(mysql -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$1' AND host = '$MYSQL_HOST')")
   if [ "$USER_EXISTS" -eq 0 ]; then
     mysql -ve "CREATE USER '$1'@'$MYSQL_HOST' IDENTIFIED BY '$2'"
@@ -17,6 +37,7 @@ mysql-create-user() {
 # Delete user from MySQL/MariaDB
 mysql-drop-user() {
   [ -z "$1" ] && { echo "Usage: mysql-drop-user (user)"; return; }
+  validate-username "$1" || return
   USER_EXISTS=$(mysql -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$1' AND host = '$MYSQL_HOST')")
   if [ "$USER_EXISTS" -eq 1 ]; then
     mysql -ve "DROP USER '$1'@'$MYSQL_HOST';"
@@ -28,18 +49,22 @@ mysql-drop-user() {
 # Create new database in MySQL/MariaDB.
 mysql-create-db() {
   [ -z "$1" ] && { echo "Usage: mysql-create-db (db_name)"; return; }
+  validate-dbname "$1" || return
   mysql -ve "CREATE DATABASE IF NOT EXISTS $1"
 }
 
 # Drop database in MySQL/MariaDB.
 mysql-drop-db() {
   [ -z "$1" ] && { echo "Usage: mysql-drop-db (db_name)"; return; }
+  validate-dbname "$1" || return
   mysql -ve "DROP DATABASE IF EXISTS $1"
 }
 
 # Grant all permissions for user for given database.
 mysql-grant-db() {
   [ -z "$2" ] && { echo "Usage: mysql-grant-db (user) (database)"; return; }
+  validate-username "$1" || return
+  validate-dbname "$2" || return
   USER_EXISTS=$(mysql -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$1' AND host = '$MYSQL_HOST')")
   if [ "$USER_EXISTS" -eq 1 ]; then
     mysql -ve "GRANT ALL ON $2.* TO '$1'@'$MYSQL_HOST'"
@@ -52,6 +77,7 @@ mysql-grant-db() {
 # Show current user permissions.
 mysql-show-grants() {
   [ -z "$1" ] && { echo "Usage: mysql-show-grants (user)"; return; }
+  validate-username "$1" || return
   USER_EXISTS=$(mysql -sse "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE user = '$1' AND host = '$MYSQL_HOST')")
   if [ "$USER_EXISTS" -eq 1 ]; then
     mysql -ve "SHOW GRANTS FOR '$1'@'$MYSQL_HOST'"
