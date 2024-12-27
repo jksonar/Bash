@@ -108,6 +108,11 @@ case "$1" in
     single)
         SINGLE_DB_BACKUP ${CONNECT_DETAILS} ${DB_NAME}
         ;;
+    help)
+        echo "Available commands:"
+        echo "  full (connection_details)                   - Run on MySQL Connection Take ALL Databases"
+        echo "  single (connection_details) (database_name) - Delete an existing MySQL user"
+        ;;
     *)
         USAGE
         ;;
