@@ -4,7 +4,9 @@ set -o pipefail  # Catch errors in pipelines
 set -u  # Treat unset variables as an error
 
 TOMCAT_HOME="/opt/tomcat"
+SERVICE_FILE=$(basename $TOMCAT_HOME)
 JAVA_VER=""
+JAVA_PACKAGE="17"
 TOMCAT_FILE=""
 TOMCAT_LINK=""
 HOST_OS=""
@@ -26,9 +28,9 @@ install_java() {
     else
         echo "Installing Java..."
         if [ "$HOST_OS" == "debian" ]; then
-            apt update && apt install -y openjdk-11-jdk wget
+            apt update && apt install -y openjdk-${JAVA_PACKAGE}-jdk wget
         elif [ "$HOST_OS" == "centos" ]; then
-            yum install -y java-11-openjdk java-11-openjdk-devel wget
+            yum install -y java-${JAVA_PACKAGE}-openjdk java-${JAVA_PACKAGE}-openjdk-devel wget
         fi
     fi
 
@@ -59,9 +61,9 @@ install_tomcat() {
     fi
 
     chown -R tomcat:tomcat "$TOMCAT_HOME"
-    chmod +x "$TOMCAT_HOME/bin/*.sh"
-
-    cat > /etc/systemd/system/tomcat.service << EOF
+    chmod +x ${TOMCAT_HOME}/bin/*.sh
+    SERVICE_FILE=$(basename $TOMCAT_HOME)
+    cat > /etc/systemd/system/${SERVICE_FILE}.service << EOF
 [Unit]
 Description=Apache Tomcat Web Application Container
 After=network.target
@@ -82,7 +84,8 @@ WantedBy=multi-user.target
 EOF
 
     systemctl daemon-reload
-    systemctl enable --now tomcat
+    systemctl enable ${SERVICE_FILE}
+    systemctl restart ${SERVICE_FILE}
     echo "Tomcat installed and started."
 }
 
@@ -91,12 +94,14 @@ install_httpd() {
     if [ "$HOST_OS" == "debian" ]; then
         apt install -y apache2 libapache2-mod-jk openssl
     elif [ "$HOST_OS" == "centos" ]; then
-        yum install -y httpd
+        yum install -y httpd mod_ssl
     fi
+    systemctl enable httpd
+    systemctl restart httpd
 }
 
 usage() {
-    echo "Usage: $0 [-l <tomcat-link>] [-t <tomcat-file>] [-d <tomcat-dir>] [-a (install-httpd)]"
+    echo "Usage: $0 [-d <tomcat-dir>] [-j <java-number>] [-l <tomcat-link>] [-t <tomcat-file>]  [-a (install-httpd)]"
     exit 1
 }
 
@@ -108,6 +113,7 @@ fi
 while [ $# -gt 0 ]; do
     case "$1" in
         -d) TOMCAT_HOME="$2"; shift 2 ;;
+        -j) JAVA_PACKAGE="$2"; shift 2 ;;
         -l) TOMCAT_LINK="$2"; install_java; install_tomcat; shift 2 ;;
         -t) TOMCAT_FILE="$2"; install_java; install_tomcat; shift 2 ;;
         -a) install_httpd; shift 1 ;;
