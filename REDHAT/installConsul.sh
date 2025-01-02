@@ -94,7 +94,7 @@ EOF
 
 configureNginx() {
     echo "Configuring Nginx for Consul UI..."
-    cat <<EOF > /etc/nginx/conf.d/consul.conf
+cat <<EOF > /etc/nginx/conf.d/consul.conf
 server {
     listen 80;
     server_name $BIND_ADDRESS;
@@ -102,8 +102,8 @@ server {
 
     location / {
         proxy_pass http://127.0.0.1:8500;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header Host \$host;
     }
 }
 EOF
